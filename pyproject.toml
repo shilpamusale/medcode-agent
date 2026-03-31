@@ -1,0 +1,89 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "medcode-agent"
+version = "0.1.0"
+description = "5-agent LangGraph pipeline for autonomous ICD-10/CPT medical coding"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    # Orchestration
+    "langgraph>=0.2.0",
+    "langchain>=0.3.0",
+    "langchain-anthropic>=0.3.0",
+
+    # Anthropic SDK
+    "anthropic>=0.40.0",
+
+    # Schema validation
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.0.0",
+
+    # Clinical NLP
+    "transformers>=4.40.0",
+    "torch>=2.2.0",
+
+    # API clients
+    "httpx>=0.27.0",
+    "aiohttp>=3.9.0",
+
+    # Data
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+
+    # Eval
+    "scikit-learn>=1.5.0",
+    "scipy>=1.13.0",
+
+    # Observability
+    "langsmith>=0.1.0",
+
+    # Serving
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+    "mypy>=1.10.0",
+    "ruff>=0.4.0",
+    "httpx>=0.27.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "--cov=. --cov-report=term-missing --cov-fail-under=80"
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+    "notebooks/*",
+    "finetuning/train.py",
+    "serving/app.py",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "agents", "tools", "pipeline", "schemas",
+    "eval", "finetuning", "serving"
+]

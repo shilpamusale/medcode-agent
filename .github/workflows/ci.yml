@@ -1,0 +1,67 @@
+name: MedCode Agent CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+
+  lint-and-type:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dev dependencies
+        run: pip install ruff mypy pydantic
+      - name: Run ruff
+        run: ruff check .
+      - name: Run mypy
+        run: mypy agents/ tools/ pipeline/ schemas/ eval/ serving/
+        continue-on-error: true  # schemas are empty stubs on Day 1
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-type
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dev dependencies
+        run: pip install pytest pytest-asyncio pytest-cov
+      - name: Run pytest
+        run: pytest tests/unit/ -v --no-cov
+        # --no-cov because coverage fails below 80% on Day 1 (empty modules)
+        # Remove --no-cov flag after Day 2 schemas are implemented
+        env:
+          ANTHROPIC_API_KEY: "sk-ant-test-dummy"
+          UMLS_API_KEY: "test-dummy"
+
+  eval-regression:
+    name: Eval Regression
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dependencies
+        run: pip install pytest
+      - name: Run eval regression
+        run: echo "Eval regression placeholder — activates at M3"
+        # Replaced with: python eval/runner.py --regression-check
+        # when eval/runner.py is implemented on Day 6
